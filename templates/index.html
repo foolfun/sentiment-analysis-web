@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人物情感分析</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    {#    <script src="../static/js/echarts.min.js" ></script>#}
+    <script src="../static/js/echarts.common.min.js"></script>
+    <script src="../static/js/echarts.js"></script>
+    <script src="../static/js/echarts.simple.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f0f0f0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="layui-fluid">
+    <ul class="layui-nav">
+        <li class="layui-nav-item">情感分析</li>
+    </ul>
+    <div class="layui-row layui-col-space15" style="margin-top:50px;">
+        <div class="layui-col-lg5 ">
+            <form class="layui-form" style="margin-left:10px">
+                <div class="layui-form-item">
+                    <div class="layui-form-item layui-form-text">
+                        <textarea placeholder="请输入文本" class="layui-textarea" rows="20" id="cont"></textarea>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            {#                            <button class="layui-btn layui-col-md-offset3" lay-submit lay-filter="*" id="btn">立即提交</button>#}
+                            <button type="reset" class="layui-btn layui-btn-primary layui-col-md-offset3">重置</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-col-lg7">
+
+            <div class="layui-card-header">
+                <button id="btn" class="layui-btn layui-col-md">点击获取结果</button>
+            </div>
+
+            <div class="layui-card-body">
+                <table class="layui-table" id="res">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>句子</th>
+                        <th>主语</th>
+                        <th>情感</th>
+                        <th>可信度(%)</th>
+                    </tr>
+                    </thead>
+                </table>
+                <div id="main" class="layui-card-body" style="width: 500px;height: 350px;"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+<script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+<script type="text/javascript">
+    $('#btn').click(function () {
+        var cValue = $("#cont").val();
+        // alert(cValue);
+        $.ajax({
+            url: "cont_post",//要提交的路径
+            type: "post",//请求方式
+            dataType: "json",
+            data: cValue, //要发送的数据
+            success: function (data) {
+                {#alert(data.emo);#}
+                {#alert(data.conf);#}
+                {#$("#emo").val(data.emo);#}
+                {#$("#conf").val(data.conf);#}
+                {#$("#s_char").val(data.s_char);#}
+                var item;
+                var data_size = 0
+                $.each(data, function (i, result) {
+                    {#alert(i)#}
+                    item = "<tr><td>" + (data_size + 1) + "</td><td>"+ result[3] + "</td><td>" + result[0] + "</td><td>" + result[1]
+                        + "</td><td>"+ result[2] + "</td></tr>";
+                    $('#res').append(item);
+                    data_size = data_size + 1
+                });
+                // 基于准备好的dom，初始化echarts实例
+                var myChart = echarts.init(document.getElementById('main'));
+
+                {#var color = ['#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B']#}
+                var color = {
+                    "anger": '#C1232B',
+                    "disgust": '#e6502d',
+                    "happiness": '#ff0609',
+                    "like": '#ffd22e',
+                    "sadness": '#a0caff'
+                }
+                {#alert(data[1][1])#}
+
+                var series = [];
+                for (var i = 0, size = data_size; i < size; i++) {
+                    series.push({
+                        name: data[i][1],
+                        type: 'bar',
+                        stack: '总量',
+                        label: {
+                            show: false,
+                            position: 'insideRight'
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: color[data[i][1]]
+                            }
+                        },
+                        data: [200]
+                    });
+                }
+                // 指定图表的配置项和数据
+                var option = {
+                    legend: {
+                        data: ['anger', 'disgust', 'happiness', 'like', 'sadness'],
+                        top:30,
+                        left: 'center',
+                        textStyle: {
+                            color: '#0c0c0c',
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '50%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'value',
+                        show: false
+                    },
+                    yAxis: {
+                        type: 'category',
+                        data: ['情感变化']
+                    },
+                    series: series
+                };
+
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+                console.log(data)
+            }//响应成功后要执行的函数
+        })
+    })
+</script>
+</body>
+</html>
